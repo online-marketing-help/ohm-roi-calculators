@@ -123,6 +123,7 @@ const INDUSTRIES = {
   universal: {
     slug: "universal",
     name: "Any business",
+    askValue: "What is one new customer worth to you?",
     headline: "What are the calls you miss actually worth?",
     lede:
       "This works for any business that sells over the phone. If your trade is listed below, " +
@@ -143,6 +144,7 @@ const INDUSTRIES = {
   "real-estate": {
     slug: "real-estate",
     name: "Estate and letting agents",
+    askValue: "What do you earn on one instruction?",
     headline: "What are the valuations you never hear about worth?",
     lede:
       "Vendors ring in the evening, after they have talked it over at home. That is exactly " +
@@ -163,6 +165,7 @@ const INDUSTRIES = {
   dental: {
     slug: "dental",
     name: "Dental practices",
+    askValue: "What is one new patient worth to you?",
     headline: "What is a new patient who could not get through worth?",
     lede:
       "Reception is with a patient, the phone rings out, and the caller tries the practice " +
@@ -183,6 +186,7 @@ const INDUSTRIES = {
   clinics: {
     slug: "clinics",
     name: "Private clinics and healthcare",
+    askValue: "What is one new patient worth to you?",
     headline: "What are the patient enquiries you miss worth?",
     lede:
       "Lunch cover, peak morning, and the hour after close. The phone does not stop because " +
@@ -202,6 +206,7 @@ const INDUSTRIES = {
   plumbers: {
     slug: "plumbers",
     name: "Plumbers and emergency trades",
+    askValue: "What is an average job worth?",
     headline: "What is the job worth that went to whoever answered first?",
     lede:
       "An emergency caller does not leave a voicemail. They ring the next firm on the list, " +
@@ -222,6 +227,7 @@ const INDUSTRIES = {
   hvac: {
     slug: "hvac",
     name: "Heating and HVAC",
+    askValue: "What is an average job worth?",
     headline: "What is a breakdown call you could not take worth?",
     lede:
       "Cold snap, phones light up, two engineers are already out. The calls you cannot reach " +
@@ -241,6 +247,7 @@ const INDUSTRIES = {
   contractors: {
     slug: "contractors",
     name: "Contractors and home improvement",
+    askValue: "What is an average project worth?",
     headline: "What is an enquiry that rang out worth?",
     lede: "You are on site, not at a desk. The phone is still where the work comes from.",
     valueLabel: "Average value of one project",
@@ -258,6 +265,7 @@ const INDUSTRIES = {
   "law-firms": {
     slug: "law-firms",
     name: "Law firms",
+    askValue: "What do you bill on an average matter?",
     headline: "What is the client who could not reach you worth?",
     lede:
       "Someone with a legal problem rings three firms. The one that picks up and takes the " +
@@ -279,6 +287,7 @@ const INDUSTRIES = {
   "car-dealerships": {
     slug: "car-dealerships",
     name: "Car dealerships",
+    askValue: "What do you make on one car, after costs?",
     headline: "What is the buyer who gave up on hold worth?",
     lede:
       "Sales, service and parts all land on the same switchboard. The buyer who cannot get " +

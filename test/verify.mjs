@@ -45,31 +45,57 @@ const gbp = (s) => {
   return m ? parseFloat(m[1].replace(/,/g, "")) : 0;
 };
 
-const PAGES = ["index.html", "real-estate.html", "dental.html", "clinics.html",
+const PAGES = ["any-business.html", "real-estate.html", "dental.html", "clinics.html",
   "plumbers.html", "hvac.html", "contractors.html", "law-firms.html", "car-dealerships.html"];
+
+console.log("\n0. THE CHOOSER\n");
+await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "networkidle" });
+const tiles = await page.locator(".tile").count();
+check("index lists every calculator as its own link", tiles === PAGES.length, `${tiles} tiles`);
+check("no dropdown anywhere on it", (await page.locator("select").count()) === 0);
+await page.locator(".tile").nth(2).click();
+await page.waitForLoadState("networkidle");
+check("a tile opens its own page", /\.html/.test(page.url()) && !/index/.test(page.url()), page.url());
 
 console.log("\n1. EVERY PAGE LOADS AND SHOWS A RESULT\n");
 for (const p of PAGES) {
   await page.goto(`http://localhost:${PORT}/${p}`, { waitUntil: "networkidle" });
   const head = await page.locator("#headline").innerText();
-  const net = await page.locator("#net").innerText();
-  const plan = await page.locator("#plan-name").innerText();
-  const ok = head.length > 10 && /£/.test(net) && /Starter|Growth|Scale/.test(plan);
-  check(p.padEnd(22), ok, `${plan}, net ${net}`);
+  const verdict = await page.locator("#verdict").innerText();
+  const asks = await page.locator(".ask").count();
+  const ok = head.length > 10 && /£/.test(verdict) && asks === 3;
+  check(p.padEnd(22), ok, `${asks} questions, "${verdict.slice(0, 44)}"`);
 }
+
+console.log("\n1b. IT IS SIMPLE BEFORE IT IS DETAILED\n");
+await page.goto(`http://localhost:${PORT}/dental.html`, { waitUntil: "networkidle" });
+check("only three questions are visible at first",
+  (await page.locator(".ask").count()) === 3);
+check("the workings start hidden",
+  await page.locator("#workings").isHidden());
+check("the result is NOT behind the email form",
+  /£/.test(await page.locator("#verdict").innerText()) &&
+  (await page.locator("#verdict").isVisible()));
+await page.locator("#show-workings").click();
+check("the button reveals them", await page.locator("#workings").isVisible());
+check("and the detail sliders are in there",
+  (await page.locator("#detail-fields .field").count()) === 4);
 
 console.log("\n2. THE ARITHMETIC, CHECKED AGAINST AN INDEPENDENT SUM\n");
 await page.goto(`http://localhost:${PORT}/dental.html`, { waitUntil: "networkidle" });
 
 /* Drive the real controls to known values, then compute the answer here. */
 async function setAll(v) {
+  /* The three headline questions live in #a-*, the rest behind #d-*. */
   for (const [k, val] of Object.entries(v)) {
-    await page.locator(`#f-${k}`).evaluate((el, x) => {
+    const sel = ["calls", "missedPct", "value"].includes(k) ? `#a-${k}` : `#d-${k}`;
+    await page.locator(sel).evaluate((el, x) => {
       el.value = x;
       el.dispatchEvent(new Event("input", { bubbles: true }));
     }, val);
   }
 }
+if (await page.locator("#workings").isHidden()) await page.locator("#show-workings").click();
 const V = { calls: 600, missedPct: 40, newPct: 50, recoverPct: 80, convertPct: 25, value: 1000, minutes: 4 };
 await setAll(V);
 
@@ -88,28 +114,31 @@ const plan = PLANS.find((p) => p.minutes >= minutes) || PLANS[2];
 const cost = plan.price + Math.max(0, minutes - plan.minutes) * OVERAGE;
 const net = revenue - cost;
 
-check("missed calls", num(await page.locator("#chain li").first().innerText()) === Math.round(missed),
-  `page ${await page.locator("#chain li").first().innerText()} vs mine ${Math.round(missed)}`);
-check("recovered revenue", Math.abs(num(await page.locator("#revenue").innerText()) - revenue) <= 1,
-  `page ${await page.locator("#revenue").innerText()} vs mine £${Math.round(revenue)}`);
+/* The chain now opens with the total, so the missed figure is the second row. */
+check("missed calls", num(await page.locator("#chain li").nth(1).innerText()) === Math.round(missed),
+  `page ${await page.locator("#chain li").nth(1).innerText()} vs mine ${Math.round(missed)}`);
+check("recovered revenue", Math.abs(num(await page.locator("#lost").innerText()) - revenue) <= 1,
+  `page ${await page.locator("#lost").innerText()} vs mine £${Math.round(revenue)}`);
 check("plan chosen for the minutes", (await page.locator("#plan-name").innerText()) === plan.name,
   `page ${await page.locator("#plan-name").innerText()} vs mine ${plan.name} (${Math.round(minutes)} min)`);
-check("monthly cost incl. overage", Math.abs(num(await page.locator("#cost").innerText()) - cost) <= 1,
-  `page ${await page.locator("#cost").innerText()} vs mine £${Math.round(cost)}`);
-check("net", Math.abs(num(await page.locator("#net").innerText()) - Math.abs(net)) <= 1,
-  `page ${await page.locator("#net").innerText()} vs mine £${Math.round(net)}`);
+check("monthly cost incl. overage", Math.abs(num(await page.locator("#price").innerText()) - cost) <= 1,
+  `page ${await page.locator("#price").innerText()} vs mine £${Math.round(cost)}`);
+const verdictTxt = await page.locator("#verdict").innerText();
+check("net, read out of the verdict sentence",
+  Math.abs(num(verdictTxt.match(/£[\d,]+/)[0]) - Math.abs(net)) <= 1,
+  `page "${verdictTxt.slice(0, 50)}" vs mine £${Math.round(net)}`);
 check("year one subtracts the setup fee",
   Math.abs(num(await page.locator("#year1").innerText()) - Math.abs(net * 12 - plan.setup)) <= 2,
   `page ${await page.locator("#year1").innerText()} vs mine £${Math.round(net * 12 - plan.setup)}`);
 
 console.log("\n3. IT CAN SHOW A LOSS, RATHER THAN ONLY EVER SELLING\n");
 await setAll({ calls: 40, missedPct: 5, newPct: 10, recoverPct: 20, convertPct: 2, value: 60, minutes: 1 });
-const netTxt = await page.locator("#net").innerText();
-check("a poor case comes out negative", netTxt.trim().startsWith("-"), `net ${netTxt}`);
+const netTxt = await page.locator("#verdict").innerText();
+check("a poor case says it would cost them", /would .*cost you/i.test(netTxt), netTxt.slice(0, 70));
 check("and is coloured as a loss",
-  (await page.locator("#net").getAttribute("class")).includes("bad"));
-check("payback says never rather than a fantasy number",
-  /never/i.test(await page.locator("#payback").innerText()),
+  (await page.locator("#verdict").getAttribute("class")).includes("bad"));
+check("payback refuses to invent a number",
+  /not at these numbers/i.test(await page.locator("#payback").innerText()),
   await page.locator("#payback").innerText());
 
 console.log("\n4. MINUTES AND OVERAGE\n");
@@ -122,6 +151,11 @@ check("overage is charged and shown",
 const overTxt = await page.locator("#over").innerText();
 check("the overage rate quoted is 60p", /60p/.test(overTxt), overTxt);
 
+/* The mode and plan controls live inside the folded panel, so open it first. */
+const openWorkings = async () => {
+  if (await page.locator("#workings").isHidden()) await page.locator("#show-workings").click();
+};
+await openWorkings();
 await page.locator('[data-mode="all"]').click();
 const allMins = num(await page.locator("#minutes").innerText());
 await page.locator('[data-mode="overflow"]').click();
@@ -131,27 +165,28 @@ check("answering everything needs more minutes than overflow only",
 
 console.log("\n5. PRICES MATCH THE AGREED SHEET\n");
 const seen = {};
+await openWorkings();
 for (const id of ["starter", "growth", "scale"]) {
   await page.locator("#planpick").selectOption(id);
+  const line = await page.locator("#plan-line").innerText();
+  const all = line.match(/£[\d,]+|[\d,]+ minutes/g) || [];
   seen[await page.locator("#plan-name").innerText()] = {
-    price: gbp(await page.locator("#plan-price").innerText()),
-    mins: num(await page.locator("#plan-mins").innerText()),
-    setup: gbp(await page.locator("#plan-setup").innerText()),
+    price: gbp(all[0]), mins: num(all[1]), setup: gbp(all[2]), raw: line,
   };
 }
 for (const p of PLANS) {
   const s = seen[p.name];
   check(`${p.name}: £${p.price}, ${p.minutes} min, £${p.setup} setup`,
     s && s.price === p.price && s.mins === p.minutes && s.setup === p.setup,
-    s ? `£${s.price}, ${s.mins} min, £${s.setup}` : "not shown");
+    s ? s.raw : "not shown");
 }
 
 console.log("\n6. SOURCES ARE LABELLED HONESTLY\n");
 for (const [p, grade] of [["dental.html", "study"], ["plumbers.html", "study"],
-                          ["car-dealerships.html", "vendor"], ["index.html", "vendor"]]) {
+                          ["car-dealerships.html", "vendor"], ["any-business.html", "vendor"]]) {
   await page.goto(`http://localhost:${PORT}/${p}`, { waitUntil: "networkidle" });
-  const cls = await page.locator(".help.src").first().getAttribute("class");
-  const txt = await page.locator(".help.src").first().innerText();
+  const cls = await page.locator(".hint.src").first().getAttribute("class");
+  const txt = await page.locator(".hint.src").first().innerText();
   check(`${p} marks its missed-call figure as "${grade}"`, cls.includes(grade), txt.split("\n")[0]);
 }
 

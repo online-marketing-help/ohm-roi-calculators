@@ -14,7 +14,8 @@ Plain HTML, CSS and JavaScript. No build step, no framework, no dependencies.
 
 | File | For |
 |---|---|
-| `index.html` | Any business. The universal one. |
+| `index.html` | The chooser. Nine tiles, one per trade. |
+| `any-business.html` | Any business. The general one. |
 | `real-estate.html` | Estate and letting agents |
 | `dental.html` | Dental practices |
 | `clinics.html` | Private clinics and healthcare |
@@ -24,8 +25,35 @@ Plain HTML, CSS and JavaScript. No build step, no framework, no dependencies.
 | `law-firms.html` | Law firms |
 | `car-dealerships.html` | Car dealerships |
 
-Every page carries a trade selector in the top right, so a visitor who lands on
-the wrong one is a click away from the right one.
+`index.html` is a list of tiles, not a dropdown: each calculator is its own page
+with its own URL, so you can link the dental service page straight to the dental
+calculator.
+
+## What a visitor sees
+
+Three questions in plain English: how many calls a month, how many go
+unanswered, and what one customer is worth. Then one sentence with the answer.
+
+The answer is never hidden behind a form. The email form sits underneath it and
+offers something extra: the figures written up, and a reply the same working day.
+That is the pattern the research supports, and the one it warns against is
+putting the result behind the form, where people can tell the gate is bait.
+
+Everything else, the full chain, the assumptions, the sources, the plan sizing,
+is folded behind **Show me how you worked that out**. It is all still there and
+still editable, it just is not the first thing an owner is asked to understand.
+
+## Where the leads go
+
+The form posts to `https://n8n.srv1836598.hstgr.cloud/webhook/ohm-roi-lead`,
+which writes the enquiry into the same lead table the website assistant uses,
+marked hot, with the figures the visitor entered. The team is emailed on the
+next pass of the notify workflow, usually within five minutes. Speed matters
+here: a lead answered within the hour is far likelier to qualify, so do not let
+these sit.
+
+The page holds no credentials. The webhook only accepts the OMH domains, so the
+calculator cannot be lifted onto someone else's site.
 
 ---
 
