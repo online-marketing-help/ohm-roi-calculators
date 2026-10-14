@@ -78,6 +78,7 @@
       hint: "A rough number is fine. Fifty a week is about 200 a month.",
       min: 20, max: 2000, step: 10,
       show: (v) => Math.round(v).toLocaleString("en-GB") + " calls",
+      scale: (v) => Math.round(v).toLocaleString("en-GB"),
     }));
 
     wrap.appendChild(ask({
@@ -86,6 +87,7 @@
       hint: "Out of hours, engaged, everyone busy. Most owners guess low, so check your phone bill if you can.",
       min: 0, max: 90, step: 1,
       show: (v) => Math.round(state.calls * v / 100).toLocaleString("en-GB") + " calls a month",
+      scale: (v) => Math.round(v) + "%",
       sourced: true,
     }));
 
@@ -97,6 +99,10 @@
       max: (ind.valueRange || {}).max || 10000,
       step: (ind.valueRange || {}).step || 50,
       show: (v) => money(v),
+      scale: (v) => v >= 1000 ? "£" + Math.round(v / 1000) + "k" : money(v),
+      /* Only badge it where the figure is actually derived from something. A
+         bare "our assumption" badge on every page is noise. */
+      sourced: ind.valueSource && ind.valueSource !== "ours" ? ind.valueSource : null,
     }));
   }
 
@@ -124,14 +130,30 @@
       render();
     });
 
+    /* The scale under the track, so the slider reads like a dial with a range
+       rather than a bare line. */
+    const scale = document.createElement("div");
+    scale.className = "scale";
+    const mid = o.min + (o.max - o.min) / 2;
+    [o.min, mid, o.max].forEach(function (v) {
+      const sp = document.createElement("span");
+      sp.textContent = o.scale ? o.scale(v) : Math.round(v).toLocaleString("en-GB");
+      scale.appendChild(sp);
+    });
+
     const hint = document.createElement("p");
     hint.className = "hint";
     hint.textContent = o.hint;
 
-    row.append(q, out, input, hint);
+    const head = document.createElement("div");
+    head.className = "ask-head";
+    head.append(q, out);
 
-    if (o.sourced) {
-      const s = SOURCES[ind.missedSource];
+    row.append(head, input, scale, hint);
+
+    const srcKey = o.sourced === true ? ind.missedSource : o.sourced;
+    if (srcKey && SOURCES[srcKey]) {
+      const s = SOURCES[srcKey];
       const p = document.createElement("p");
       p.className = "hint src " + s.grade;
       if (s.url) {
@@ -217,37 +239,61 @@
         (k === "minutes" ? state[k].toFixed(1) : Math.round(state[k])) + row.dataset.suffix;
     });
 
-    /* The one sentence that matters. */
-    $("#verdict").innerHTML = "";
-    if (r.net > 0) {
-      $("#verdict").innerHTML =
-        "You would be <b>" + money(r.net) + " a month</b> better off.";
-      $("#verdict").className = "verdict good";
-    } else {
-      $("#verdict").innerHTML =
-        "At these numbers it would <b>cost you " + money(Math.abs(r.net)) +
-        " a month</b>. Worth a conversation rather than a sale.";
-      $("#verdict").className = "verdict bad";
-    }
+    /* The headline figure, with the sum beside it so it is never a black box. */
+    const wonN = Math.round(r.won);
+    $("#verdict-num").textContent = (r.net < 0 ? "-" : "+") + money(Math.abs(r.net));
+    $("#verdict-num").className = r.net > 0 ? "good" : "bad";
+    $("#verdict-sum").textContent =
+      wonN.toLocaleString("en-GB") + " " + (wonN === 1 ? one(ind.unit) : ind.unit) +
+      " x " + money(state.value) + " - " + money(r.monthlyCost) + " cost";
+    document.querySelector(".hero-fig .cap").textContent =
+      r.net < 0 ? "What it would cost you, every month" : "Better off, every month";
 
     $("#lost").textContent = money(r.revenue);
     $("#lostsub").textContent =
-      "about " + Math.round(r.won).toLocaleString("en-GB") + " " +
-      (Math.round(r.won) === 1 ? one(ind.unit) : ind.unit) + " a month";
+      "about " + wonN.toLocaleString("en-GB") + " " +
+      (wonN === 1 ? one(ind.unit) : ind.unit) + " a month";
+
+    const answered = Math.round((state.mode === "all" ? state.calls : r.missed) * 12);
+    $("#answered").textContent = answered.toLocaleString("en-GB");
+    $("#answeredsub").textContent = state.mode === "all"
+      ? "every call that comes in" : "that nobody picks up today";
+
+    /* The reframe that does the work in a sales conversation: forget the model,
+       what is the least that has to happen? Where one customer already covers
+       the fee, say so as a multiple. Where it does not, say how many do, rather
+       than printing a limp "0.9x" and hoping nobody reads it. */
+    if (state.value >= r.monthlyCost) {
+      $("#minimum-cap").textContent = "Win just 1 " + one(ind.unit) + " a month and it is";
+      $("#minimum-roi").textContent = (state.value / r.monthlyCost).toFixed(1) + "x back";
+      $("#minimum-roi").className = "good";
+    } else {
+      const need = r.breakeven;
+      const n = need < 2 ? need.toFixed(1) : String(Math.ceil(need));
+      $("#minimum-cap").textContent = "It has paid for itself the moment you win";
+      $("#minimum-roi").textContent =
+        n + " " + (parseFloat(n) <= 1.05 ? one(ind.unit) : ind.unit) + " a month";
+      $("#minimum-roi").className = "good";
+    }
 
     $("#price").textContent = money(r.monthlyCost);
     $("#pricesub").textContent = r.over > 0
-      ? r.plan.name + " plus " + money2(r.overCost) + " of extra minutes"
-      : r.plan.name + " plan, " + money(r.plan.setup) + " to set up";
+      ? r.plan.name + " plus " + money2(r.overCost) + " of minutes"
+      : r.plan.name + ", " + money(r.plan.setup) + " to set up";
+
+    document.querySelectorAll("#segments button").forEach((b) => {
+      b.classList.toggle("on", b.dataset.plan === r.plan.id);
+    });
+    $("#plan-note").textContent =
+      r.plan.blurb + " Live in " + r.plan.delivery + ".";
 
     $("#payback").textContent =
       r.payback === Infinity ? "not at these numbers"
         : r.payback < 1 ? "under a month" : r.payback.toFixed(1) + " months";
     $("#year1").textContent = (r.year1 < 0 ? "-" : "") + money(Math.abs(r.year1));
     $("#year1").className = r.year1 > 0 ? "good" : "bad";
-    $("#breakeven").textContent = r.breakeven < 1.05
-      ? "1 " + one(ind.unit) + " a month"
-      : r.breakeven.toFixed(1) + " " + ind.unit + " a month";
+    /* The old "pays for itself at N customers" line now lives in the
+       highlight card, phrased as the minimum case rather than a threshold. */
 
     /* workings */
     $("#chain").innerHTML = "";
@@ -303,17 +349,23 @@
       });
     });
 
-    const planSel = $("#planpick");
-    [{ id: "auto", name: "Let the calculator choose" }].concat(PLANS).forEach((p) => {
-      const o = document.createElement("option");
-      o.value = p.id; o.textContent = p.name;
-      planSel.appendChild(o);
+    /* Plans as segments, the way a visitor expects to pick one. "auto" is the
+       default and simply highlights whichever one their minutes land in. */
+    const segs = $("#segments");
+    PLANS.forEach((p) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.plan = p.id;
+      b.textContent = p.name;
+      b.addEventListener("click", () => {
+        state.plan = state.plan === p.id ? "auto" : p.id;
+        render();
+      });
+      segs.appendChild(b);
     });
-    planSel.addEventListener("change", () => { state.plan = planSel.value; render(); });
 
     $("#reset").addEventListener("click", () => {
       Object.assign(state, ind.defaults, { mode: "overflow", plan: "auto" });
-      planSel.value = "auto";
       document.querySelectorAll("[data-mode]").forEach((x) =>
         x.classList.toggle("on", x.dataset.mode === "overflow"));
       buildMain(); buildDetail(); render();

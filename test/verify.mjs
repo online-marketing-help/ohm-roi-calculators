@@ -61,7 +61,7 @@ console.log("\n1. EVERY PAGE LOADS AND SHOWS A RESULT\n");
 for (const p of PAGES) {
   await page.goto(`http://localhost:${PORT}/${p}`, { waitUntil: "networkidle" });
   const head = await page.locator("#headline").innerText();
-  const verdict = await page.locator("#verdict").innerText();
+  const verdict = await page.locator("#verdict-num").innerText();
   const asks = await page.locator(".ask").count();
   const ok = head.length > 10 && /£/.test(verdict) && asks === 3;
   check(p.padEnd(22), ok, `${asks} questions, "${verdict.slice(0, 44)}"`);
@@ -74,8 +74,8 @@ check("only three questions are visible at first",
 check("the workings start hidden",
   await page.locator("#workings").isHidden());
 check("the result is NOT behind the email form",
-  /£/.test(await page.locator("#verdict").innerText()) &&
-  (await page.locator("#verdict").isVisible()));
+  /£/.test(await page.locator("#verdict-num").innerText()) &&
+  (await page.locator("#verdict-num").isVisible()));
 await page.locator("#show-workings").click();
 check("the button reveals them", await page.locator("#workings").isVisible());
 check("and the detail sliders are in there",
@@ -123,20 +123,26 @@ check("plan chosen for the minutes", (await page.locator("#plan-name").innerText
   `page ${await page.locator("#plan-name").innerText()} vs mine ${plan.name} (${Math.round(minutes)} min)`);
 check("monthly cost incl. overage", Math.abs(num(await page.locator("#price").innerText()) - cost) <= 1,
   `page ${await page.locator("#price").innerText()} vs mine £${Math.round(cost)}`);
-const verdictTxt = await page.locator("#verdict").innerText();
-check("net, read out of the verdict sentence",
-  Math.abs(num(verdictTxt.match(/£[\d,]+/)[0]) - Math.abs(net)) <= 1,
-  `page "${verdictTxt.slice(0, 50)}" vs mine £${Math.round(net)}`);
+const verdictTxt = await page.locator("#verdict-num").innerText();
+check("net, read off the headline figure",
+  Math.abs(num(verdictTxt) - Math.abs(net)) <= 1,
+  `page "${verdictTxt}" vs mine £${Math.round(net)}`);
+check("the sum is printed beside it, so it is not a black box",
+  /x £[\d,]+ - £[\d,]+ cost/.test(await page.locator("#verdict-sum").innerText()),
+  await page.locator("#verdict-sum").innerText());
 check("year one subtracts the setup fee",
   Math.abs(num(await page.locator("#year1").innerText()) - Math.abs(net * 12 - plan.setup)) <= 2,
   `page ${await page.locator("#year1").innerText()} vs mine £${Math.round(net * 12 - plan.setup)}`);
 
 console.log("\n3. IT CAN SHOW A LOSS, RATHER THAN ONLY EVER SELLING\n");
 await setAll({ calls: 40, missedPct: 5, newPct: 10, recoverPct: 20, convertPct: 2, value: 60, minutes: 1 });
-const netTxt = await page.locator("#verdict").innerText();
-check("a poor case says it would cost them", /would .*cost you/i.test(netTxt), netTxt.slice(0, 70));
+const netTxt = await page.locator("#verdict-num").innerText();
+check("a poor case comes out negative", netTxt.trim().startsWith("-"), netTxt);
+check("and is labelled as a cost, not a gain",
+  /cost you/i.test(await page.locator(".hero-fig .cap").innerText()),
+  await page.locator(".hero-fig .cap").innerText());
 check("and is coloured as a loss",
-  (await page.locator("#verdict").getAttribute("class")).includes("bad"));
+  (await page.locator("#verdict-num").getAttribute("class")).includes("bad"));
 check("payback refuses to invent a number",
   /not at these numbers/i.test(await page.locator("#payback").innerText()),
   await page.locator("#payback").innerText());
@@ -165,9 +171,9 @@ check("answering everything needs more minutes than overflow only",
 
 console.log("\n5. PRICES MATCH THE AGREED SHEET\n");
 const seen = {};
-await openWorkings();
 for (const id of ["starter", "growth", "scale"]) {
-  await page.locator("#planpick").selectOption(id);
+  await page.locator(`#segments button[data-plan="${id}"]`).click();
+  await openWorkings();
   const line = await page.locator("#plan-line").innerText();
   const all = line.match(/£[\d,]+|[\d,]+ minutes/g) || [];
   seen[await page.locator("#plan-name").innerText()] = {

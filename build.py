@@ -47,36 +47,79 @@ PAGE = """<!doctype html>
 
   <p class="back"><a href="index.html">All calculators</a></p>
 
-  <header class="top">
+  <header class="hero">
+    <span class="badge">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+           stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h2m3 0h3M8 16h2m3 0h3"/>
+      </svg>
+      ROI calculator
+    </span>
     <h1 id="headline"></h1>
     <p class="lede" id="lede"></p>
   </header>
 
-  <section class="card asks-card">
-    <div id="asks"></div>
-  </section>
+  <div class="panel">
+    <div class="panel-in">
 
-  <section class="card result">
-    <p class="verdict" id="verdict"></p>
+      <div class="col-controls">
+        <div id="asks"></div>
 
-    <div class="two">
-      <div class="fig">
-        <span>Work you are missing</span>
-        <b id="lost"></b>
-        <em id="lostsub"></em>
+        <div class="planpick">
+          <span class="pp-label">Choose a plan</span>
+          <div class="segments" id="segments" role="group" aria-label="Choose a plan"></div>
+          <p class="pp-note" id="plan-note"></p>
+        </div>
       </div>
-      <div class="fig">
-        <span>What the agent costs</span>
-        <b id="price"></b>
-        <em id="pricesub"></em>
+
+      <div class="col-results">
+        <div class="hero-fig">
+          <span class="cap">Better off, every month</span>
+          <b id="verdict-num"></b>
+          <em id="verdict-sum"></em>
+        </div>
+
+        <div class="two">
+          <div class="stat">
+            <span class="cap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                   stroke-width="1.9" stroke-linecap="round"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Work you are missing
+            </span>
+            <b id="lost"></b>
+            <em id="lostsub"></em>
+          </div>
+          <div class="stat">
+            <span class="cap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                   stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              Calls answered a year
+            </span>
+            <b id="answered"></b>
+            <em id="answeredsub"></em>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <div>
+            <span class="cap" id="minimum-cap"></span>
+            <b id="minimum-roi"></b>
+          </div>
+          <div class="right">
+            <span class="cap">Monthly cost</span>
+            <b id="price"></b>
+            <em id="pricesub"></em>
+          </div>
+        </div>
+
+        <div class="lines">
+          <div class="line"><span>Setup fee paid back in</span><b id="payback"></b></div>
+          <div class="line"><span>First year, after the setup fee</span><b id="year1"></b></div>
+        </div>
       </div>
+
     </div>
-
-    <div class="line"><span>Setup fee paid back in</span><b id="payback"></b></div>
-    <div class="line"><span>First year, after the setup fee</span><b id="year1"></b></div>
-    <div class="line"><span>It pays for itself at</span><b id="breakeven"></b></div>
-
-  </section>
+  </div>
 
   <section class="card capture" id="capture">
     <h2>Want this as a breakdown you can show someone?</h2>
@@ -149,11 +192,6 @@ PAGE = """<!doctype html>
           <div class="meter"><i id="minbar"></i></div>
           <div class="mins"><span><b id="minutes"></b> minutes used</span><span id="over"></span></div>
         </div>
-
-        <label class="pick" style="margin-top:18px">
-          Try a different plan
-          <select id="planpick" aria-label="Choose a plan"></select>
-        </label>
 
         <h2 style="margin-top:26px">Where the starting figures come from</h2>
         <ul id="notes"></ul>

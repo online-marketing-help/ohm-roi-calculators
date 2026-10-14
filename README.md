@@ -31,8 +31,15 @@ calculator.
 
 ## What a visitor sees
 
-Three questions in plain English: how many calls a month, how many go
-unanswered, and what one customer is worth. Then one sentence with the answer.
+A centred headline, then one panel: the dials on the left, the answer on the
+right. Three questions in plain English, how many calls a month, how many go
+unanswered and what one customer is worth, plus the plan as three buttons.
+
+On the right, the figure in large type with the sum printed under it
+("15 new patients x £800 - £849 cost"), two supporting stats, and a highlight
+card with the least that has to happen: either "win just 1 and it is 2.9x back",
+or, where one customer does not cover the fee, how many do. It never prints a
+limp "0.9x" and hopes nobody reads it.
 
 The answer is never hidden behind a form. The email form sits underneath it and
 offers something extra: the figures written up, and a reply the same working day.

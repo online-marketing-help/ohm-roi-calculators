@@ -99,54 +99,94 @@ footer strong{color:var(--ink)}
 }
 
 /* ===================================================================
-   The simplified layout: a chooser page, three big questions, one
-   answer, and everything else folded away behind a button.
+   Layout: a centred hero, then one panel with the dials on the left
+   and the answer on the right. Our own palette, cream and ink and
+   amber, rather than the dark purple it is modelled on.
    =================================================================== */
 
-.wrap{max-width:820px}
-.grid .card,.cards{max-width:none}
-h1{max-width:20ch}
-.back{margin:0 0 18px;font-size:14px}
+.wrap{max-width:1140px;padding-top:40px}
+.back{margin:0 0 26px;font-size:14px}
 .back a{color:var(--muted);text-decoration:none}
 .back a:hover{color:var(--ink)}
-header.top{display:block;margin-bottom:22px}
 
-/* ------------------------------------------------------- chooser tiles */
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:14px}
+/* ----------------------------------------------------------- the hero */
+.hero{text-align:center;margin:0 auto 34px;max-width:720px}
+.badge{display:inline-flex;align-items:center;gap:7px;background:#e7f4ed;color:var(--good);
+  border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;margin-bottom:18px}
+.hero h1{max-width:none;margin:0 auto 10px;font-size:clamp(32px,5.4vw,52px);line-height:1.05}
+.hero .lede{margin:0 auto;max-width:52ch;font-size:17px}
+
+/* ---------------------------------------------------------- the panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:22px;
+  padding:6px;box-shadow:0 24px 60px -34px rgba(16,24,40,.3)}
+.panel-in{display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  background:linear-gradient(180deg,#fdfcfa,var(--surface));border-radius:18px;padding:26px}
+@media (max-width:900px){.panel-in{grid-template-columns:1fr;padding:18px}}
+.col-controls{padding:6px 18px 0 6px}
+@media (max-width:900px){.col-controls{padding:0}}
+
+/* --------------------------------------------------------- the dials */
+.ask{padding:0 0 26px}
+.ask:last-child{padding-bottom:18px}
+.ask-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:12px}
+.ask .q{font-size:16px;font-weight:500;color:var(--muted);margin:0;line-height:1.35}
+.ask .answer{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);
+  font-variant-numeric:tabular-nums;white-space:nowrap;margin:0}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);
+  margin-top:5px;font-variant-numeric:tabular-nums}
+.ask .hint{font-size:13px;margin-top:9px}
+.ask .hint.src{background:var(--warm);border-radius:9px;padding:9px 11px;margin-top:10px}
+input[type=range]{height:26px}
+
+/* ---------------------------------------------------------- segments */
+.planpick{margin-top:4px}
+.pp-label{display:block;font-size:16px;color:var(--muted);margin-bottom:10px}
+.segments{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.segments button{font:inherit;font-weight:600;font-size:15px;cursor:pointer;
+  padding:13px 8px;border-radius:12px;border:1px solid var(--line);
+  background:var(--warm);color:var(--muted)}
+.segments button:hover{border-color:var(--amber);color:var(--ink)}
+.segments button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.pp-note{font-size:13.5px;color:var(--muted);margin:12px 0 0;line-height:1.5}
+
+/* ---------------------------------------------------------- results */
+.col-results{display:flex;flex-direction:column;gap:12px}
+.cap{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--muted)}
+.hero-fig{background:var(--warm);border:1px solid var(--line);border-radius:16px;padding:22px 24px}
+.hero-fig b{display:block;font-size:clamp(38px,5.6vw,54px);line-height:1.05;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;margin:8px 0 6px}
+.hero-fig em{font-style:normal;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.two{grid-template-columns:1fr}}
+.stat{background:var(--warm);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.stat b{display:block;font-size:26px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:6px 0 3px}
+.stat em{font-style:normal;font-size:12.5px;color:var(--muted)}
+.highlight{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+  background:#fdf6ea;border:1px solid var(--amber);border-radius:16px;padding:18px 20px}
+.highlight b{display:block;font-size:30px;letter-spacing:-.02em;margin-top:5px;
+  font-variant-numeric:tabular-nums}
+.highlight .right{text-align:right}
+.highlight .right b{font-size:25px;color:var(--amber-deep)}
+.highlight em{font-style:normal;font-size:12.5px;color:var(--muted)}
+.lines{padding:2px 4px}
+.line{display:flex;justify-content:space-between;gap:14px;font-size:14.5px;padding:7px 0}
+.line span{color:var(--muted)}
+.line b{font-variant-numeric:tabular-nums}
+
+/* --------------------------------------------------- chooser + rest */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .tile{display:block;background:var(--surface);border:1px solid var(--line);
-  border-radius:var(--radius);padding:18px 20px;text-decoration:none;color:inherit}
+  border-radius:var(--radius);padding:20px 22px;text-decoration:none;color:inherit}
 .tile:hover{border-color:var(--amber);transform:translateY(-1px)}
 .tile b{display:block;font-size:17px;margin-bottom:5px}
 .tile span{display:block;font-size:14px;color:var(--muted);line-height:1.5}
 
-/* ---------------------------------------------------- the three asks */
-.asks-card{padding:10px 24px 24px}
-.ask{padding:22px 0;border-bottom:1px solid var(--line)}
-.ask:last-child{border-bottom:none}
-.ask .q{display:block;font-size:19px;font-weight:600;line-height:1.3;margin-bottom:10px}
-.ask .answer{font-size:30px;font-weight:600;letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums;margin-bottom:10px;color:var(--amber-deep)}
-.ask .hint{font-size:14px;margin-top:9px}
-.ask .hint.src{background:var(--warm);border-radius:8px;padding:9px 11px}
-
-/* ------------------------------------------------------------ result */
-.result{margin-top:18px}
-.verdict{font-size:25px;line-height:1.3;letter-spacing:-.01em;margin:0 0 20px;font-weight:500}
-.verdict b{font-weight:700}
-.verdict.good b{color:var(--good)}
-.verdict.bad b{color:var(--bad)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
-@media (max-width:560px){.two{grid-template-columns:1fr}}
-.two .fig b{display:block;font-size:27px;margin:2px 0}
-.two .fig em{font-style:normal;font-size:13px;color:var(--muted)}
-
-/* ------------------------------------------------------------- middle */
-.middle{text-align:center;margin:20px 0}
+.middle{text-align:center;margin:22px 0}
+#workings{max-width:1140px}
 #workings .card h2{margin-top:0}
 #chain{margin-bottom:16px}
 
-/* --------------------------------------------------------------- form */
-.capture{margin-top:18px;border-color:var(--amber)}
+.capture{margin-top:18px;border-color:var(--amber);max-width:760px;margin-left:auto;margin-right:auto}
 .capture h2{color:var(--ink);font-size:19px;text-transform:none;letter-spacing:0;margin-bottom:8px}
 .rows{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 @media (max-width:560px){.rows{grid-template-columns:1fr}}
@@ -160,3 +200,11 @@ button.cta{border:none;cursor:pointer;font:inherit;font-weight:600;font-size:16p
 .formnote.bad{color:var(--bad)}
 .formnote.good{color:var(--good)}
 .or{font-size:14px;color:var(--muted);margin:16px 0 0}
+
+/* The highlight line varies in length ("1.3x back" against "1.1 new patients a
+   month"), so it has to wrap without shoving the price column into two lines. */
+.highlight{align-items:center}
+.highlight>div:first-child{min-width:0}
+.highlight b{font-size:clamp(21px,2.3vw,28px);line-height:1.18}
+.highlight .right{flex:0 0 auto;white-space:nowrap}
+.highlight .right b{font-size:24px}
