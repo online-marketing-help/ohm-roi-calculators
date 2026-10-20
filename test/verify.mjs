@@ -191,8 +191,12 @@ console.log("\n6. SOURCES ARE LABELLED HONESTLY\n");
 for (const [p, grade] of [["dental.html", "study"], ["plumbers.html", "study"],
                           ["car-dealerships.html", "vendor"], ["any-business.html", "vendor"]]) {
   await page.goto(`http://localhost:${PORT}/${p}`, { waitUntil: "networkidle" });
-  const cls = await page.locator(".hint.src").first().getAttribute("class");
-  const txt = await page.locator(".hint.src").first().innerText();
+  /* The source line now lives inside the tooltip behind each question, so it
+     is in the DOM but hidden until hover. innerText on a hidden node returns
+     "", hence textContent. */
+  const src = page.locator(".tip-pop .src").first();
+  const cls = await src.getAttribute("class");
+  const txt = await src.textContent();
   check(`${p} marks its missed-call figure as "${grade}"`, cls.includes(grade), txt.split("\n")[0]);
 }
 

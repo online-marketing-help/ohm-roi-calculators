@@ -141,21 +141,22 @@
       scale.appendChild(sp);
     });
 
-    const hint = document.createElement("p");
-    hint.className = "hint";
-    hint.textContent = o.hint;
-
-    const head = document.createElement("div");
-    head.className = "ask-head";
-    head.append(q, out);
-
-    row.append(head, input, scale, hint);
+    /* The explanation and the source both go behind the mark next to the
+       question rather than under the slider. See the tooltip note in
+       style.css for why. */
+    const inside = [];
+    if (o.hint) {
+      const hint = document.createElement("span");
+      hint.className = "tip-hint";
+      hint.textContent = o.hint;
+      inside.push(hint);
+    }
 
     const srcKey = o.sourced === true ? ind.missedSource : o.sourced;
     if (srcKey && SOURCES[srcKey]) {
       const s = SOURCES[srcKey];
-      const p = document.createElement("p");
-      p.className = "hint src " + s.grade;
+      const p = document.createElement("span");
+      p.className = "src " + s.grade;
       if (s.url) {
         p.append("We have started you at the figure reported by ");
         const a = document.createElement("a");
@@ -166,14 +167,122 @@
       } else {
         p.append("Starting figure: " + s.label + ". Move it to what you know.");
       }
-      row.appendChild(p);
+      inside.push(p);
     }
+
+    appendTipInline(q, makeTip(inside));
+
+    const head = document.createElement("div");
+    head.className = "ask-head";
+    head.append(q, out);
+
+    row.append(head, input, scale);
 
     row.dataset.key = o.key;
     ASK_FORMAT[o.key] = o.show;
     return row;
   }
   const ASK_FORMAT = {};
+
+  /* ------------------------------------------------------------ tooltips */
+
+  /* A mark beside the question holding the explanation and the source.
+     Hover opens it on a mouse, which is CSS; this adds the tap, because a
+     phone has no hover and the text would otherwise be unreachable. */
+  function closeTips(except) {
+    document.querySelectorAll(".tip.open").forEach(function (t) {
+      if (t === except) return;
+      t.classList.remove("open");
+      const b = t.querySelector(".tip-b");
+      if (b) b.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  /* Keep the bubble inside the frame. It is centred on the mark by default,
+     and pinned to whichever edge it would otherwise hang off. */
+  function placeTip(wrap) {
+    wrap.classList.remove("at-left", "at-right");
+    const pop = wrap.querySelector(".tip-pop");
+    if (!pop) return;
+    const r = pop.getBoundingClientRect();
+    const pad = 10;
+    if (r.left < pad) wrap.classList.add("at-left");
+    else if (r.right > window.innerWidth - pad) wrap.classList.add("at-right");
+    /* The tail follows the mark when the bubble is pinned. */
+    const b = wrap.querySelector(".tip-b").getBoundingClientRect();
+    const now = pop.getBoundingClientRect();
+    pop.style.setProperty("--tail", (b.left + b.width / 2 - now.left) + "px");
+  }
+
+  /* Put the mark on the same line as the last word of the question. Appended
+     plainly it wraps on its own onto the next line whenever the question
+     fills the column, which reads as a stray dot under the text. */
+  function appendTipInline(el, tip) {
+    if (!tip) return;
+    /* The whole question is the target, not just the 17px mark: people aim at
+       the words they are reading. The mark stays as the thing that says there
+       is something to read. */
+    el.classList.add("has-tip");
+    el.addEventListener("mouseenter", function () { placeTip(tip); });
+    const last = el.lastChild;
+    if (last && last.nodeType === 3 && /\S\s*$/.test(last.nodeValue)) {
+      const text = last.nodeValue.replace(/\s+$/, "");
+      const cut = text.lastIndexOf(" ");
+      const keep = cut === -1 ? "" : text.slice(0, cut + 1);
+      const word = cut === -1 ? text : text.slice(cut + 1);
+      const tail = document.createElement("span");
+      tail.className = "nowrap";
+      tail.textContent = word;
+      tail.appendChild(tip);
+      last.nodeValue = keep;
+      el.appendChild(tail);
+      return;
+    }
+    el.appendChild(tip);
+  }
+
+  let tipsWired = false;
+  function makeTip(nodes) {
+    if (!nodes.length) return null;
+
+    const wrap = document.createElement("span");
+    wrap.className = "tip";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "tip-b";
+    btn.setAttribute("aria-label", "Why we ask this, and where the figure comes from");
+    btn.setAttribute("aria-expanded", "false");
+    btn.textContent = "i";
+
+    const pop = document.createElement("span");
+    pop.className = "tip-pop";
+    pop.setAttribute("role", "tooltip");
+    nodes.forEach(function (n) { pop.appendChild(n); });
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const open = !wrap.classList.contains("open");
+      closeTips(wrap);
+      wrap.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) placeTip(wrap);
+    });
+    wrap.addEventListener("mouseenter", function () { placeTip(wrap); });
+    btn.addEventListener("focus", function () { placeTip(wrap); });
+
+    wrap.append(btn, pop);
+
+    if (!tipsWired) {
+      tipsWired = true;
+      document.addEventListener("click", function () { closeTips(null); });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") closeTips(null);
+      });
+    }
+    return wrap;
+  }
 
   /* ------------------------------------------------------- the workings */
 
@@ -205,6 +314,10 @@
       const l = document.createElement("label");
       l.setAttribute("for", "d-" + f.k);
       l.textContent = f.label;
+      const help = document.createElement("span");
+      help.className = "tip-hint";
+      help.textContent = f.help;
+      appendTipInline(l, makeTip([help]));
       const o = document.createElement("output");
       head.append(l, o);
 
@@ -213,11 +326,7 @@
       i.min = f.min; i.max = f.max; i.step = f.step; i.value = state[f.k];
       i.addEventListener("input", () => { state[f.k] = parseFloat(i.value); render(); });
 
-      const h = document.createElement("p");
-      h.className = "hint";
-      h.textContent = f.help;
-
-      row.append(head, i, h);
+      row.append(head, i);
       wrap.appendChild(row);
     });
   }
