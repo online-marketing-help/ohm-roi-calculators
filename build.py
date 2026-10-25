@@ -122,37 +122,14 @@ PAGE = """<!doctype html>
   </div>
 
   <section class="card capture" id="capture">
-    <h2>Want this as a breakdown you can show someone?</h2>
-    <p class="hint" style="font-size:15px;margin-bottom:16px">
-      We will send the figures above, written up properly, with what the agent
-      would say on your calls. Someone will come back to you the same working
-      day. No obligation, and we will tell you if it is not worth it for you.
+    <h2>Want these figures checked against your own numbers?</h2>
+    <p class="hint" style="font-size:15px;margin-bottom:4px">
+      This is an estimate built from what you typed. We will go through it with
+      you properly, with what the agent would say on your calls, and tell you
+      plainly if it is not worth it for you.
     </p>
-    <form id="lead-form" novalidate>
-      <div class="rows">
-        <label>Your name
-          <input name="name" type="text" autocomplete="name" required>
-        </label>
-        <label>Business name
-          <input name="company" type="text" autocomplete="organization">
-        </label>
-        <label>Email
-          <input name="email" type="email" autocomplete="email" required>
-        </label>
-        <label>Phone
-          <input name="phone" type="tel" autocomplete="tel">
-        </label>
-      </div>
-      <p class="consent">
-        We use this to send your breakdown and to get in touch about it. Nothing
-        else, and never passed on.
-      </p>
-      <button type="submit" class="cta" id="lead-submit">Send me the breakdown</button>
-      <p class="formnote" id="lead-note" role="status"></p>
-    </form>
     <p class="or">
-      Or skip it and
-      <a href="https://onlinemarketinghelp.co.uk/omh-free-consultation">book a free 30 minute consultation</a>.
+      <a class="cta" href="https://onlinemarketinghelp.co.uk/omh-free-consultation">Book a free 30 minute consultation</a>
     </p>
   </section>
 

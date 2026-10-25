@@ -127,9 +127,17 @@ const verdictTxt = await page.locator("#verdict-num").innerText();
 check("net, read off the headline figure",
   Math.abs(num(verdictTxt) - Math.abs(net)) <= 1,
   `page "${verdictTxt}" vs mine £${Math.round(net)}`);
-check("the sum is printed beside it, so it is not a black box",
-  /x £[\d,]+ - £[\d,]+ cost/.test(await page.locator("#verdict-sum").innerText()),
-  await page.locator("#verdict-sum").innerText());
+/* The line under the headline is a sentence now, not a sum, because the sum
+   rounded its customer count and then no longer reached the figure above it.
+   What has to hold is that the two money figures it quotes still reconcile to
+   that headline, within a pound of rounding. */
+const sumTxt = await page.locator("#verdict-sum").innerText();
+const sumNums = [...sumTxt.matchAll(/£([\d,]+)/g)].map((m) => Number(m[1].replace(/,/g, "")));
+check("the line under it reconciles to the headline",
+  sumNums.length === 2 && Math.abs((sumNums[0] - sumNums[1]) - Math.abs(net)) <= 1,
+  sumTxt);
+check("and it names how many customers that is",
+  /about [\d.,]+ /.test(sumTxt), sumTxt);
 check("year one subtracts the setup fee",
   Math.abs(num(await page.locator("#year1").innerText()) - Math.abs(net * 12 - plan.setup)) <= 2,
   `page ${await page.locator("#year1").innerText()} vs mine £${Math.round(net * 12 - plan.setup)}`);

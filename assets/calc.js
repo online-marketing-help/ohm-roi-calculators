@@ -26,13 +26,7 @@
 
   const state = Object.assign({}, ind.defaults, { mode: "overflow", plan: "auto" });
 
-  /* Where the form goes. The page is static and public, so it cannot hold the
-     Convex secret: this webhook is the only way in, and it writes the lead
-     against the figures the visitor actually entered. */
-  const LEAD_URL =
-    "https://n8n.srv1836598.hstgr.cloud/webhook/ohm-roi-lead";
-
-  let last = null;   /* the most recent result, sent with the form */
+  let last = null;   /* the most recent result */
 
   /* ------------------------------------------------------------ the model */
 
@@ -348,13 +342,21 @@
         (k === "minutes" ? state[k].toFixed(1) : Math.round(state[k])) + row.dataset.suffix;
     });
 
-    /* The headline figure, with the sum beside it so it is never a black box. */
-    const wonN = Math.round(r.won);
+    /* The headline figure, with a sentence under it saying where it came from.
+       It used to read "3 customers x £900 - £449 cost", which asked the reader
+       to do the sum and then failed it: the model works on 3.19 customers and
+       the line rounded that to 3, so the arithmetic on screen did not reach
+       the number above it. This says the same thing in words, keeps "about"
+       in front of the rounded count, and quotes the two money figures that do
+       reconcile. */
+    const wonN = r.won >= 2 ? Math.round(r.won) : Math.round(r.won * 10) / 10;
+    const unit = wonN === 1 ? one(ind.unit) : ind.unit;
     $("#verdict-num").textContent = (r.net < 0 ? "-" : "+") + money(Math.abs(r.net));
     $("#verdict-num").className = r.net > 0 ? "good" : "bad";
     $("#verdict-sum").textContent =
-      wonN.toLocaleString("en-GB") + " " + (wonN === 1 ? one(ind.unit) : ind.unit) +
-      " x " + money(state.value) + " - " + money(r.monthlyCost) + " cost";
+      "Win back about " + wonN.toLocaleString("en-GB") + " " + unit +
+      " a month from calls nobody answers, worth " + money(r.revenue) +
+      ", less the " + money(r.monthlyCost) + " the agent costs.";
     document.querySelector(".hero-fig .cap").textContent =
       r.net < 0 ? "What it would cost you, every month" : "Better off, every month";
 
@@ -480,8 +482,6 @@
       buildMain(); buildDetail(); render();
     });
 
-    wireForm();
-
     const notes = $("#notes");
     ind.notes.forEach((n) => {
       const li = document.createElement("li");
@@ -492,69 +492,6 @@
     buildMain();
     buildDetail();
     render();
-  }
-
-  /* ----------------------------------------------------------- lead form */
-  /* The headline answer is never gated. This asks only once the visitor has
-     seen what they came for, and it offers something real in return: the
-     figures written up, and a same-day reply. */
-
-  function wireForm() {
-    const form = $("#lead-form");
-    if (!form) return;
-    const note = $("#lead-note");
-    const btn = $("#lead-submit");
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const d = Object.fromEntries(new FormData(form).entries());
-
-      if (!String(d.name || "").trim()) return bad("Please tell us your name.");
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(d.email || "").trim()))
-        return bad("That email address does not look right.");
-
-      btn.disabled = true;
-      note.className = "formnote";
-      note.textContent = "Sending\u2026";
-
-      fetch(LEAD_URL, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name: d.name, email: d.email, phone: d.phone, company: d.company,
-          industry: ind.name,
-          unit: one(ind.unit),
-          calls: state.calls,
-          missed: Math.round(state.calls * state.missedPct / 100),
-          value: state.value,
-          recovered: last ? Math.round(last.revenue) : 0,
-          cost: last ? Math.round(last.monthlyCost) : 0,
-          net: last ? Math.round(last.net) : 0,
-          plan: last ? last.plan.name : "",
-          page_url: location.href,
-        }),
-      })
-        .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-        .then(function () {
-          form.innerHTML = "";
-          note.className = "formnote good";
-          note.textContent =
-            "Thank you. Your breakdown is on its way and somebody will come back " +
-            "to you today. If it is urgent, ring 020 3489 3934.";
-          form.appendChild(note);
-        })
-        .catch(function () {
-          btn.disabled = false;
-          bad("Sorry, that did not go through. Please ring 020 3489 3934 or " +
-              "email support@onlinemarketinghelp.co.uk and we will sort it.");
-        });
-
-      function bad(msg) {
-        note.className = "formnote bad";
-        note.textContent = msg;
-        btn.disabled = false;
-      }
-    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
