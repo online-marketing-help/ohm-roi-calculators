@@ -261,3 +261,17 @@ button.cta{border:none;cursor:pointer;font:inherit;font-weight:600;font-size:16p
 .highlight b{font-size:clamp(21px,2.3vw,28px);line-height:1.18}
 .highlight .right{flex:0 0 auto;white-space:nowrap}
 .highlight .right b{font-size:24px}
+
+
+/* ------------------------------------------------- embedded in our own page
+   Inside an iframe on onlinemarketinghelp.co.uk the host page already carries
+   the navigation, the call to action and the footer, so the calculator's own
+   copies of all three are noise. The disclaimer stays: it is the only line
+   here that is not repeated upstairs, and it is the one that says this is an
+   estimate rather than a quotation. */
+html.embedded .back,
+html.embedded #capture,
+html.embedded .middle,
+html.embedded footer .addr { display: none; }
+html.embedded .wrap { padding-top: 26px; padding-bottom: 34px; }
+html.embedded footer { margin-top: 22px; padding-bottom: 0; }

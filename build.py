@@ -24,10 +24,10 @@ LEDES = dict(re.findall(r'slug: "([a-z-]+)",(?:.|\n)*?lede:\s*\n?\s*"([^"]+)"', 
 FILE = {s: ("any-business.html" if s == "universal" else f"{s}.html") for s in SLUGS}
 
 FOOTER = """  <footer>
-    <strong>Online Marketing Help</strong> &middot; The Hut, Central Ave, Hullbridge,
-    Hockley SS5 6AU &middot; 020 3489 3934 &middot;
+    <span class="addr"><strong>Online Marketing Help</strong> &middot; The Hut, Central Ave,
+    Hullbridge, Hockley SS5 6AU &middot; 020 3489 3934 &middot;
     <a href="mailto:support@onlinemarketinghelp.co.uk">support@onlinemarketinghelp.co.uk</a>
-    <br>
+    <br></span>
     Prices are the current AI voice agent plans and exclude VAT. This is an
     estimate built from the figures you enter. It is not a quotation and not a
     promise of results.
@@ -41,6 +41,15 @@ PAGE = """<!doctype html>
 <title>{title}</title>
 <meta name="description" content="{desc}">
 <link rel="stylesheet" href="assets/style.css">
+<script>
+  /* Embedded in a page of our own, the calculator's own furniture is
+     duplication: the host page already has a call to action, a footer and a
+     way back. Marked before first paint so none of it flashes up and then
+     disappears. The braces are doubled because this page is built through
+     str.format, which reads a single brace as a field. */
+  try {{ if (window.self !== window.top) document.documentElement.className += " embedded"; }}
+  catch (e) {{ document.documentElement.className += " embedded"; }}
+</script>
 </head>
 <body>
 <div class="wrap">
